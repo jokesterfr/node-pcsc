@@ -58,7 +58,7 @@ void event_loop( uv_idle_t* handle, int loop_status );
  */
 #define CHECK_CONTEXT() 												\
 	LONG validate_rv = SCardIsValidContext(hContext); 					\
-	if(scope && validate_rv != SCARD_S_SUCCESS) {						\
+	if(validate_rv != SCARD_S_SUCCESS) {								\
 		Local<String> message = String::New("Context is not valid");	\
     	ThrowException(Exception::TypeError(message));					\
 		return scope.Close( Undefined() );								\
@@ -110,7 +110,6 @@ int init_context( void ) {
 	if (once == 0) {
 	    uv_idle_init(uv_default_loop(), &idler);
 	    uv_idle_start(&idler, event_loop);
-		uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 		once++;
 	}
 	return 0;
@@ -156,7 +155,7 @@ int update_readers( void ){
 	ptr = mszReaders;
 	for (i=0; i<nbReaders; i++) {
 		// For js binding
-		arr->Set(Number::New(i), String::New(ptr));
+		readers->Set(Number::New(i), String::New(ptr));
 
 		// Update readers state
 		readersState[i].szReader = ptr;
@@ -167,7 +166,7 @@ int update_readers( void ){
 	}
 
 	Local<Object> obj = Object::New();
-	obj->Set(String::NewSymbol("readers"), arr);
+	obj->Set(String::NewSymbol("readers"), readers);
 
 	return 0;
 }
@@ -187,18 +186,18 @@ void event_loop( uv_idle_t* handle, int loop_status ){
 	DWORD evt;
 	LONG rv;
 	Local<Value> status;
-	int i, j;
+	unsigned int i, j;
 	const unsigned argc = 1;
 
 	// Readers state has to be filled up by update_readers
-	if(!readersState) return update_readers();
+	if(!readersState) update_readers();
 
 	// Check status
-	rv = SCardGetStatusChange(hContext, INFINITE, readersState, readers.Length());
+	rv = SCardGetStatusChange(hContext, INFINITE, readersState, readers->Length());
 	if ((rv == SCARD_S_SUCCESS) || (rv == SCARD_E_TIMEOUT)) {
 
 		// Get the event issuer (card reader)
-		for (i=0; i < readers.Length(); i++) {
+		for (i=0; i < readers->Length(); i++) {
 			evt = readersState[i].dwEventState;
 			if (evt & SCARD_STATE_CHANGED) {
 				// New state is now the current state
@@ -224,12 +223,12 @@ void event_loop( uv_idle_t* handle, int loop_status ){
 			obj->Set(String::NewSymbol("status"), status);
 
 			// Call eventual registered callbacks
-			if( callbacks ){
-				for (j = 0; j<callbacks.Length(); j++){
-					// call callback
-					Local<Value> argv[argc] = { obj };
-					callbacks[i]->Call(Context::GetCurrent()->Global(), argc, argv);
-				}
+			Local<Function> cb;
+			for (j = 0; j<callbacks->Length(); j++){
+				// call callback
+				Local<Value> argv[argc] = { obj };
+				cb = Local<Function>::Cast(callbacks->Get(Integer::New(i)));
+				cb ->Call(Context::GetCurrent()->Global(), argc, argv);
 			}
 
 		} // Next reader loop
@@ -246,7 +245,7 @@ void event_loop( uv_idle_t* handle, int loop_status ){
  */
 Handle<Value> init( const Arguments& args ) {
 	HandleScope scope;
-	if (init_context())
+	if ( init_context() )
     	return scope.Close( True() );
 	else 
 		return scope.Close( False() );
@@ -277,17 +276,22 @@ Handle<Value> getReaders( const Arguments& args ) {
  * @return {v8::Value} unused
  */
 Handle<Value> addCallback( const Arguments& args ){
+	HandleScope scope;
+	CHECK_CONTEXT();	
+
 	Local<Function> cb = Local<Function>::Cast(args[0]);
 	Local<Array> tmp;
-	if(callbacks){
-		tmp = Array::New(callbacks.Length()+1);
-		for (int i = 0; i<callbacks.Length(); i++){
-			tmp[i] = callbacks[i];
+	unsigned int i;
+
+	if ( callbacks->Length() > 0 ){
+		tmp = Array::New(callbacks->Length()+1);
+		for (i = 0; i<callbacks->Length(); i++){
+			tmp->Get(Integer::New(i)) = callbacks->Get(Integer::New(i));
 		}
 	} else {
 		tmp = Array::New(1);
 	}
-	newCbs[tmp.Length()-1] = cb;
+	tmp->Get(Integer::New(tmp->Length()-1)) = cb;
 	callbacks = tmp;
 
 	return scope.Close( Undefined() );
@@ -321,22 +325,18 @@ Handle<Value> getCardInfo( const Arguments& args ){
 	// 	// 		perror(atr_command);
 	// 	// 	}
 	// }
+	return scope.Close( Undefined() );
 }
 
 /**
  * Free some stuff on exit
  * @return none
  */
-void exitModule( void ) {
-	// Get off the uv loop
-    uv_signal_stop(&idler);
-
+void exitModule( void * args ){
     // Free things
 	free(readersState);
 	SCardFreeMemory(hContext, mszReaders);
 	SCardReleaseContext(hContext);
-
-	// DONE
 }
 
 /**
@@ -344,11 +344,11 @@ void exitModule( void ) {
  * @return none
  */
 void pcscModule(Handle<Object> target) {
-	NODE_SET_METHOD(target, "init", init_context);
-	NODE_SET_METHOD(target, "getReaders", get_readers);
+	NODE_SET_METHOD(target, "init", init);
+	NODE_SET_METHOD(target, "getReaders", getReaders);
 	NODE_SET_METHOD(target, "addCallback", addCallback);
 	NODE_SET_METHOD(target, "getCardInfo", getCardInfo);
-	AtExit(exitModule);
+	node::AtExit(&exitModule);
 }
 
-NODE_MODULE(pcsc, pcscModule);
+NODE_MODULE(pcsc, pcscModule)
