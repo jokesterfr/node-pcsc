@@ -3,12 +3,8 @@
 		{
 			'target_name': 'pcsc',
 			'sources': [ 'src/node-pcsc.cc' ],
-			'dependencies':[
-				'deps/libuv/uv.gyp:libuv'
-			],
-			'include_dirs+': [
-				'/usr/include/PCSC',
-				'deps/libuv/include'
+			'include_dirs': [
+				'/usr/include/PCSC'
 			],
 			'cflags': [
 				'-Wall',
@@ -17,8 +13,7 @@
 				'-fPIC',
 				'-fno-strict-aliasing',
 				'-fno-exceptions',
-				'-pedantic'
-			],
+				'-pedantic'],
 			'link_settings': {
 				'libraries': [
 					'-lpthread',
