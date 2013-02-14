@@ -1,0 +1,9 @@
+Version 0.1.0 - 13/02/2013 - Clément Désiles
+============================================
+* Support reader listing
+* Javascript-side Event Emitter
+* Card ATR retrieval
+* Card list support for more details
+* Card list update script
+* NPM Package install and details
+* Add licence file

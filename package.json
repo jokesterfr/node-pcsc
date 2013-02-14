@@ -1,0 +1,20 @@
+{
+	"name": "node-pcsc",
+	"version": "0.1.0",
+	"description": "A PCSC binding for node.js",
+	"author": "Telecom Santé <tech@telecomsante.com>",
+	"contributors": [
+		{ "name": "Clément Désiles", "email": "clement.desiles@telecomsante.com" }
+	],
+	"license": "MIT Licence",
+	"preferGlobal": "false",
+	"dependencies": { },
+	"scripts": {
+		"update-list": "./tools/updateList.js"
+	},
+	"devDependencies": { 
+		"bufferstream":">=0.5.x"
+	},
+	"test": "./test.js",
+	"engine": {	"node": ">=0.8.0" }
+}
