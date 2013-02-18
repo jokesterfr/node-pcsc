@@ -28,6 +28,9 @@ pcsc.on('readerStateChange', function(evt) {
 		console.log(evt.reader.name);
 		if (evt.reader.type) console.log('-> type:', evt.reader.type);
 		if (evt.card.name) console.log('-> card:', evt.card.name);
+		if (evt.card.ATR) console.log('-> card ATR:', evt.card.ATR);
+		if (evt.card.Protocol) console.log('-> card Protocol:', evt.card.Protocol);
+		if (evt.card.UID) console.log('-> card UID:', evt.card.UID);
 		console.log();
 	}
 });
