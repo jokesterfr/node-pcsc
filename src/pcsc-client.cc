@@ -181,7 +181,7 @@ namespace PCSC {
 							atr[0] = '\0';
 						}
 						cardObj->Set(v8::String::NewSymbol("ATR"), v8::String::New(atr));
-					}				
+					}
 					
 				    // Establishes a connection to a smart card contained by a specific reader.
 				    SCARDHANDLE hCard;
@@ -220,13 +220,13 @@ namespace PCSC {
 					DWORD resApduLen = 3001;
 
 					SCardTransmit(
-						hCard,						// Card handle
-						ioRequest,					// Pointer to the send protocol header
-						uidADPU,					// Send buffer
-						(DWORD)sizeof(uidADPU),		// Send buffer length
-						NULL,						// Pointer to the rec. protocol header
-						resApdu,					// Receive buffer
-						&resApduLen	// Receive buffer length
+						hCard,					// Card handle
+						ioRequest,				// Pointer to the send protocol header
+						uidADPU,				// Send buffer
+						(DWORD)sizeof(uidADPU),	// Send buffer length
+						NULL,					// Pointer to the rec. protocol header
+						resApdu,				// Receive buffer
+						&resApduLen				// Receive buffer length
 					);
 					
 					// Save UID
@@ -264,158 +264,10 @@ namespace PCSC {
 		return STATUS_CHECKED;
 	}
 
-	// /**
-	//  * Activate the newly inserted card
-	//  */
-	// int activateCard( SCARDCONTEXT &hContext, SCARD_READERSTATE *&readersState, v8::Persistent<v8::Object> &readers ){
-
-	// 	LONG ret;
-	// 	SCARDHANDLE hCard;
-	// 	DWORD activeProtocol;
-
-	//     //Establishes a connection to a smart card contained by a specific reader.
-	// 	ret = SCardConnect( 
-	//                     hContext,				// Resource manager handle.
-	// 					m_szSelectedReader,		// Reader name.
-	// 					SCARD_SHARE_EXCLUSIVE,	// Share Mode.
-	// 					SCARD_PROTOCOL_Tx,		//Preferred protocols (T=0 or T=1).
-	// 					&hCard,					// Returns the card handle.
-	// 					&activeProtocol);		// Active protocol.
-
-	// 	switch(activeProtocol) {
-	// 		case SCARD_PROTOCOL_T0:
-	// 			printf(": Card Activated via  T=0 protocol");
-	// 			break;
-
-	// 		case SCARD_PROTOCOL_T1:
-	// 			printf(": Card Activated via  T=1 protocol");
-	// 			break;
-
-	// 		case SCARD_PROTOCOL_UNDEFINED:
-	// 			printf(": ERROR: Active protocol unnegotiated or unknown");
-	// 			ret = -1;
-	// 			break;	
-	// 	}
-	// 	return ret;
-	// }
-
-	// /**
-	//  * 
-	//  */
-	// int sendADPU(){
-	// 	// Pseudo ADPU to Retrieve card Serial Number (UID)
-	// 	BYTE uidADPU[] = { 0xFF, 0xCA, 0x00, 0x00, 0x00};
-	// 	BYTE resApdu[300];
-	// 	DWORD resApduLen = 300l;
-	// 	// Send pseudo APDU to retrieve the card serical number (UID)
- //    	PCSC_Exchange(uidADPU,(DWORD)sizeof(uidADPU), resApdu, &resApduLen);
-    	
- //    	LONG PCSC_Exchange(LPCBYTE pbSendBuffer ,DWORD  cbSendLength ,LPBYTE  pbRecvBuffer ,LPDWORD pcbRecvLength ) {
-	// 		LPCSCARD_IO_REQUEST ioRequest;
-	// 		LONG lRetValue;
-
-	// 		switch (m_dwActiveProtocol) {
-	// 			case SCARD_PROTOCOL_T0:
-	// 				ioRequest = SCARD_PCI_T0;
-	// 				break;
-
-	// 			case SCARD_PROTOCOL_T1:
-	// 				ioRequest = SCARD_PCI_T1;
-	// 				break;
-
-	// 			default:
-	// 				ioRequest = SCARD_PCI_RAW;
-	// 				break;
-	// 		}
-
-	// 		// APDU exchange.
-	// 		LONG ret = SCardTransmit(m_hCard,				// Card handle.
-	// 								ioRequest,				// Pointer to the send protocol header.
-	// 								uidADPU,				// Send buffer.
-	// 								(DWORD)sizeof(uidADPU),	// Send buffer length.
-	// 								NULL,					// Pointer to the rec. protocol header.
-	// 								resApdu,				// Receive buffer.
-	// 								resApduLen);			// Receive buffer length.
-	// 		// PCSC_STATUS(lRetValue,"SCardTransmit");	
-
-	// 		// printHexString("\n   --> C-Apdu: 0x",(LPBYTE)uidADPU, (DWORD)sizeof(uidADPU));	
-	// 		// printHexString("   <-- R-Apdu: 0x",resApdu, *resApduLen);
-	// 		// printf("       SW1SW2: 0x%02X%02X\n\n",resApdu[*resApduLen - 2], resApdu[*resApduLen - 1]); 
-	// 		return lRetValue;		
-	// 	}
-
-	// // Verify if status word SW1SW2 is equal 0x9000.
- //    if ( resApdu[resApduLen - 2] == 0x90 && resApdu[resApduLen - 1] == 0x00 ){
- //        // Contactless card detected.
- //        // Retrieve the card serical number (UID) form the response APDU.
-	// 	DWORD i;
-
-	// 	printf("%s", "Card Serial Number (UID): 0x");
-
-	// 	for ( i = 0; i < (resApduLen - 2); i++ ) {
-	// 		printf("%02X ",resApdu[i]);
-	// 	}
-		
-	// 	printf("\n");
-	// }
-
+	/**
+	 * Release the PCSC context
+	 */
+	int release_context ( SCARDCONTEXT &hContext ){
+		 SCardReleaseContext(hContext);
+	}
 } // <- end of namespace
-
-
-
-// LONG PCSC_Exchange(LPCBYTE pbSendBuffer ,DWORD  cbSendLength ,LPBYTE  pbRecvBuffer ,LPDWORD pcbRecvLength )
-// {	
-	
-// 	LPCSCARD_IO_REQUEST  ioRequest;
-// 	LONG	 lRetValue;
-
-// 	switch (m_dwActiveProtocol)
-// 	{
-// 		case SCARD_PROTOCOL_T0:
-// 			ioRequest = SCARD_PCI_T0;
-// 			break;
-
-// 		case SCARD_PROTOCOL_T1:
-// 			ioRequest = SCARD_PCI_T1;
-// 			break;
-
-// 		default:
-// 			ioRequest = SCARD_PCI_RAW;
-// 			break;
-// 	}
-	
-// 	*pcbRecvLength = RcvLenMax;
-
-//     // APDU exchange.
-// 	lRetValue = SCardTransmit(m_hCard,		// Card handle.
-// 							ioRequest,		// Pointer to the send protocol header.
-// 							pbSendBuffer,	// Send buffer.
-// 							cbSendLength,	// Send buffer length.
-// 							NULL,			// Pointer to the rec. protocol header.
-// 							pbRecvBuffer,	// Receive buffer.
-// 							pcbRecvLength);	// Receive buffer length.
-// 	PCSC_STATUS(lRetValue,"SCardTransmit");	
-	
-//     printHexString("\n   --> C-Apdu: 0x",(LPBYTE)pbSendBuffer, cbSendLength);	
-// 	printHexString("   <-- R-Apdu: 0x",pbRecvBuffer, *pcbRecvLength);
-// 	printf("       SW1SW2: 0x%02X%02X\n\n",pbRecvBuffer[*pcbRecvLength - 2], pbRecvBuffer[*pcbRecvLength - 1]); 
-// 	return lRetValue;		
-// }
-
-
-// LONG PCSC_Disconnect(void)
-// {
-// 	long lRetValue;
-	
-// 	// Terminates the smart card connection.
-// 	lRetValue  = SCardDisconnect(
-//                     m_hCard,            // Card handle.
-//                     SCARD_UNPOWER_CARD);// Action to take on the card
-//                                         // in the connected reader on close. 
-// 	PCSC_STATUS(lRetValue,"SCardDisconnect");	
-	
-// 	// Release the Resource Manager Context.
-// 	lRetValue =	SCardReleaseContext(m_hContext);	
-// 	m_hContext = 0;
-// 	return lRetValue;
-// }

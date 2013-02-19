@@ -13,7 +13,11 @@ using namespace v8;
 
 PCSCEmitter::PCSCEmitter() {}
 PCSCEmitter::~PCSCEmitter() {
-	// TODO FREE ALL OF THIS
+	delete [] _readers_state;
+	_readers.Dispose();
+	_readers.Clear();
+	PCSC::release_context( _scard_context );
+	fprintf(stdout, "Destructor called -> done\n");
 }
 
 /** 
