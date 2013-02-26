@@ -11,18 +11,10 @@
  *                                                                            *
  *****************************************************************************/
 
-// Init the PCSC callback chaining
-var pcsc = require('./lib/node-pcsc').init();
+var fork = require('child_process').fork;
+var pcsc = fork('./lib/node-pcsc.js');
 
-// Get the readers
-var readers = pcsc.getReaders();
-console.log('# SmartCard/RFID available readers:');
-console.log('===================================');
-console.log(readers);
-console.log();
-
-// Register handler on `readerStateChange` events
-pcsc.on('readerStateChange', function(evt) {
+pcsc.on('message', function(evt) {
 	// Show info when state switch to present
 	if(evt.reader.status == 'SCARD_STATE_PRESENT'){
 		console.log(evt.reader.name);
@@ -35,7 +27,21 @@ pcsc.on('readerStateChange', function(evt) {
 	}
 });
 
-// Exit pcsc loop
-process.on('exit', function() {
-	if(pcsc) pcsc.stop();
-});
+
+
+// Do some other stuff
+var count = 10;
+console.log('You have', count, 'seconds to use the reader');
+console.log(count);
+var interval = setInterval(function(){
+	if(count) count--;
+	console.log(count);
+}, 1000);
+
+
+// Kill the sub process after 15s
+setTimeout(function(){
+	clearTimeout(interval);
+	console.log('Kill the sub process');
+	pcsc.kill( 'SIGTERM' );
+}, count * 1000);
