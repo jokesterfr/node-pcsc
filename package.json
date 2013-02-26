@@ -12,7 +12,7 @@
 	"scripts": {
 		"update-list": "./tools/updateList.js"
 	},
-	"main": "./lib/node-pcsc.js",
+	"main": "./binding.js",
 	"devDependencies": { 
 		"bufferstream":">=0.5.x"
 	},
