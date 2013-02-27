@@ -1,6 +1,6 @@
 {
 	"name": "node-pcsc",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "A PCSC binding for node.js",
 	"author": "Telecom Santé <tech@telecomsante.com>",
 	"contributors": [
