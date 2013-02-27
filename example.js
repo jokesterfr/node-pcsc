@@ -22,26 +22,9 @@ pcsc.on('message', function(evt) {
 		if (evt.card.name) console.log('-> card:', evt.card.name);
 		if (evt.card.ATR) console.log('-> card ATR:', evt.card.ATR);
 		if (evt.card.Protocol) console.log('-> card Protocol:', evt.card.Protocol);
+		if (evt.card.err) console.log('-> card transmit err:', evt.card.err);
 		if (evt.card.UID) console.log('-> card UID:', evt.card.UID);
 		console.log();
 	}
 });
 
-
-
-// Do some other stuff
-var count = 10;
-console.log('You have', count, 'seconds to use the reader');
-console.log(count);
-var interval = setInterval(function(){
-	if(count) count--;
-	console.log(count);
-}, 1000);
-
-
-// Kill the sub process after 15s
-setTimeout(function(){
-	clearTimeout(interval);
-	console.log('Kill the sub process');
-	pcsc.kill( 'SIGTERM' );
-}, count * 1000);

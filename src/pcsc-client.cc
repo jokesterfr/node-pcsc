@@ -111,7 +111,7 @@ namespace PCSC {
 		LONG rv;
 		v8::Local<v8::String> status;
 		char atr[MAX_ATR_SIZE*3+1];
-		char uid[3001];
+		char uid[30];
 
 		// Check context
 		rv = SCardIsValidContext(hContext);
@@ -187,59 +187,110 @@ namespace PCSC {
 				    SCARDHANDLE hCard;
 					DWORD activeProtocol;
 					v8::String::Utf8Value readerName(readers->GetOwnPropertyNames()->Get(i));
-					SCardConnect(
+					rv = SCardConnect(
 	                    hContext,				// Resource manager handle
 	                    (LPCSTR) *readerName,	// Reader name
-						SCARD_SHARE_EXCLUSIVE,	// Share Mode
+						SCARD_SHARE_SHARED,		// Share Mode
 						SCARD_PROTOCOL_T0,		// Preferred protocols (T=0 or T=1)
 						&hCard,					// Returns the card handle
 						&activeProtocol			// Active protocol
 					);
 
-				    // APDU exchange
-					LPCSCARD_IO_REQUEST ioRequest;
-					switch (activeProtocol) {
-						case SCARD_PROTOCOL_T0:
-							cardObj->Set(v8::String::NewSymbol("Protocol"), v8::String::New("T=0"));
-							ioRequest = SCARD_PCI_T0;
-							break;
+					// Connect to the card reader
+					// ----------------------------------------
+					if (rv == SCARD_S_SUCCESS) {
+					    // APDU exchange
+						LPCSCARD_IO_REQUEST ioRequest;
+						switch (activeProtocol) {
+							case SCARD_PROTOCOL_T0:
+								cardObj->Set(v8::String::NewSymbol("Protocol"), v8::String::New("T=0"));
+								ioRequest = SCARD_PCI_T0;
+								break;
 
-						case SCARD_PROTOCOL_T1:
-							cardObj->Set(v8::String::NewSymbol("Protocol"), v8::String::New("T=1"));
-							ioRequest = SCARD_PCI_T1;
-							break;
+							case SCARD_PROTOCOL_T1:
+								cardObj->Set(v8::String::NewSymbol("Protocol"), v8::String::New("T=1"));
+								ioRequest = SCARD_PCI_T1;
+								break;
 
-						default:
-							ioRequest = SCARD_PCI_RAW;
-							break;
+							default:
+								ioRequest = SCARD_PCI_RAW;
+								break;
+						}
+
+						// Pseudo ADPU to Retrieve card Serial Number (UID)
+						BYTE pbRecvBuffer[6];
+						BYTE pbSendBuffer[] = { 0xFF, 0xCA, 0x00, 0x00, 0x00 };
+
+						SCARD_IO_REQUEST pioRecvPci;
+						DWORD dwSendLength = sizeof(pbSendBuffer);
+						DWORD dwRecvLength = sizeof(pbRecvBuffer);
+
+						rv = SCardTransmit(
+							hCard,			// Card handle
+							ioRequest,		// Pointer to the sent protocol header
+							pbSendBuffer,	// Send buffer
+							dwSendLength,	// Send buffer length
+							&pioRecvPci,	// Pointer to the rec. protocol header
+							pbRecvBuffer,	// Receive buffer
+							&dwRecvLength	// Receive buffer length
+						);
+
+						if (rv == SCARD_S_SUCCESS) {
+							// Save UID
+							if (dwRecvLength) {
+								for (k = 0; k < dwRecvLength; k++) {
+									sprintf(&uid[k*3], "%02X ", pbRecvBuffer[k]);
+								}
+								uid[k*3-1] = '\0';
+								cardObj->Set(v8::String::NewSymbol("UID_length"), v8::Number::New(dwRecvLength));
+							} else {
+								uid[0] = '\0';
+							}					
+							cardObj->Set(v8::String::NewSymbol("UID"), v8::String::New(uid));
+
+							// Disconnect it right now
+							SCardDisconnect(
+								hCard,					// Card handle.
+								SCARD_UNPOWER_CARD
+							);
+						} else {
+							switch(rv) {
+								case SCARD_E_INSUFFICIENT_BUFFER:
+									cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_INSUFFICIENT_BUFFER"));
+									break;
+								case SCARD_E_INVALID_PARAMETER:
+									cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_INVALID_PARAMETER"));
+									break;
+								case SCARD_E_INVALID_HANDLE:
+									cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_INVALID_HANDLE"));
+									break;
+								case SCARD_E_INVALID_VALUE:
+									cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_INVALID_VALUE"));
+									break;
+								case SCARD_E_NO_SERVICE:
+									cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_NO_SERVICE"));
+									break;
+								case SCARD_E_NOT_TRANSACTED:
+									cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_NOT_TRANSACTED"));
+									break;
+								case SCARD_E_PROTO_MISMATCH:
+									cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_PROTO_MISMATCH"));
+									break;
+								case SCARD_E_READER_UNAVAILABLE:
+									cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_READER_UNAVAILABLE"));
+									break;
+								case SCARD_F_COMM_ERROR:
+									cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_F_COMM_ERROR"));
+									break;
+								case SCARD_W_RESET_CARD:
+									cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_W_RESET_CARD"));
+									break;
+								case SCARD_W_REMOVED_CARD:
+									cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_W_REMOVED_CARD"));
+									break;
+							}	
+						}
 					}
-
-					// Pseudo ADPU to Retrieve card Serial Number (UID)
-					BYTE uidADPU[] = { 0xFF, 0xCA, 0x00, 0x00, 0x00 };
-					BYTE resApdu[300];
-					DWORD resApduLen = 3001;
-
-					SCardTransmit(
-						hCard,					// Card handle
-						ioRequest,				// Pointer to the send protocol header
-						uidADPU,				// Send buffer
-						(DWORD)sizeof(uidADPU),	// Send buffer length
-						NULL,					// Pointer to the rec. protocol header
-						resApdu,				// Receive buffer
-						&resApduLen				// Receive buffer length
-					);
-					
-					// Save UID
-					for (j = 0; j < resApduLen; j++) {
-						sprintf(&uid[j*3], "%02X ", resApdu[j]);
-					}
-					cardObj->Set(v8::String::NewSymbol("UID"), v8::String::New(uid));
-
-					// Disconnect it right now
-					SCardDisconnect(
-						hCard,					// Card handle.
-						SCARD_UNPOWER_CARD
-					);
 				}
 
 				//

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 //
 // How to bind node-pcsc from an external program
 //
