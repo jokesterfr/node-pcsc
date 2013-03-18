@@ -27,4 +27,3 @@ pcsc.on('message', function(evt) {
 		console.log();
 	}
 });
-
