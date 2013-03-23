@@ -11,7 +11,13 @@
 #define NODE_PCSC_EMITTER_H
 
 #include <node.h>
+#ifdef __APPLE__
+#include <PCSC/winscard.h>
+#include <PCSC/wintypes.h>
+#else
 #include <winscard.h>
+#endif
+
 #include "pcsc-client.h"
 
 class PCSCEmitter : public node::ObjectWrap {

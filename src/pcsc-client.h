@@ -16,7 +16,12 @@
 #include <v8.h>
 #include <node.h>
 
+#ifdef __APPLE__
+#include <PCSC/winscard.h>
+#include <PCSC/wintypes.h>
+#else
 #include <winscard.h>
+#endif
 
 namespace PCSC {
 
