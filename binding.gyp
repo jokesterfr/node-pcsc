@@ -23,7 +23,7 @@
 			'link_settings': {
 				'libraries': [
 					'-lpthread',
-					'-lpcsclite'
+					'-framework PCSC'
 				]
 			}
 		}
