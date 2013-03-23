@@ -43,7 +43,7 @@ namespace PCSC {
 	 */
 	int update_readers( SCARDCONTEXT &hContext, SCARD_READERSTATE *&readersState, v8::Persistent<v8::Object> &readers ){
 		LONG rv;
-		DWORD dwReaders = SCARD_AUTOALLOCATE;
+		DWORD dwReaders = 0;//SCARD_AUTOALLOCATE;
 		LPSTR mszReaders;
 		LPTSTR ptr = NULL;
 		int nbReaders = 0;
@@ -56,10 +56,18 @@ namespace PCSC {
 		}
 
 		// Call with the real allocated buffer
-		rv = SCardListReaders(hContext, NULL, (LPTSTR)&mszReaders, &dwReaders);
+		rv = SCardListReaders(hContext, NULL, NULL, &dwReaders);
+		if (rv != SCARD_S_SUCCESS) {
+			readers = v8::Persistent<v8::Array>::New(v8::Array::New(0));
+			return NO_READER_FOUND;
+		}
+
+		mszReaders = (LPSTR)malloc(dwReaders);
+
+		rv = SCardListReaders(hContext, NULL, mszReaders, &dwReaders);
 		if (rv != SCARD_S_SUCCESS || mszReaders[0] == '\0') {
 			readers = v8::Persistent<v8::Array>::New(v8::Array::New(0));
-			SCardFreeMemory(hContext, mszReaders);
+			free(mszReaders);
 			return NO_READER_FOUND;
 		}
 
@@ -96,7 +104,7 @@ namespace PCSC {
 		readersState[nbReaders].szReader = "\\\\?PnP?\\Notification";
 		readersState[nbReaders].dwCurrentState = SCARD_STATE_UNAWARE;
 
-		//SCardFreeMemory(hContext, mszReaders);
+		free(mszReaders);
 		return READERS_UPDATED;
 	}
 
