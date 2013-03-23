@@ -310,7 +310,7 @@ namespace PCSC {
 
 		// Simple callback to request another check later on
 		const int argc = 0;
-		v8::Local<v8::Value> argv[argc] = NULL;
+		v8::Local<v8::Value> argv[argc] = {};
 		callback->Call(v8::Context::GetCurrent()->Global(), argc, argv);			
 		return STATUS_CHECKED;
 	}
