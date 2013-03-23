@@ -13,7 +13,7 @@ Dependencies to run this out are:
 
 If you are running a Debian/Ubuntu Linux distribution you may install it this way:
 
-	sudo apt-get install nodejs libpcsclite libpcsclite-dev
+	sudo apt-get install nodejs npm libpcsclite libpcsclite-dev
 
 To compile the native sources you may call `node-gyp`:
 
