@@ -106,7 +106,7 @@ namespace PCSC {
 	 * registered functions (if there are).
 	 */
 	int check_card_status( SCARDCONTEXT &hContext, SCARD_READERSTATE *&readersState, v8::Persistent<v8::Object> &readers, v8::Local<v8::Function> &callback ){
-		unsigned int i, j, k, nbReaders;
+		unsigned int i, k, nbReaders;
 		DWORD evt;
 		LONG rv;
 		v8::Local<v8::String> status;
