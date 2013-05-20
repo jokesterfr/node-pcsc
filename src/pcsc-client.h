@@ -38,7 +38,7 @@ namespace PCSC {
 	int init_context( SCARDCONTEXT &hContext );
 	int update_readers( SCARDCONTEXT &hContext, SCARD_READERSTATE *&readersState, v8::Persistent<v8::Object> &readers );
 	int check_card_status( SCARDCONTEXT &hContext, SCARD_READERSTATE *&readersState, v8::Persistent<v8::Object> &readers, v8::Local<v8::Function> &callback );
-	int release_context ( SCARDCONTEXT &hContext );
+	void release_context ( SCARDCONTEXT &hContext );
 }
 
 #endif
