@@ -27,11 +27,13 @@ namespace PCSC {
 	    	return ERROR_ESTABLISH_CXT;
 		}
 
+#ifndef __APPLE__
 		// Check if Plug 'n play is supported
 		rv = SCardGetStatusChange(hContext, 0, readerState, 1);
 		if (readerState[0].dwEventState & SCARD_STATE_UNKNOWN) {
 			return ERROR_PNP;
 		}
+#endif
 
 		return CONTEXT_SET;
 	}
