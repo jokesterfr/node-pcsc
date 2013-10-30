@@ -218,7 +218,7 @@ namespace PCSC {
 						}
 
 						// Pseudo ADPU to Retrieve card Serial Number (UID)
-						BYTE pbRecvBuffer[6];
+						BYTE pbRecvBuffer[256];
 						BYTE pbSendBuffer[] = { 0xFF, 0xCA, 0x00, 0x00, 0x00 };
 
 						SCARD_IO_REQUEST pioRecvPci;
