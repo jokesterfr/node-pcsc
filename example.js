@@ -27,3 +27,8 @@ pcsc.on('message', function(evt) {
 		console.log(evt);
 	}
 });
+
+i = 10;
+while(1) {
+  i = i/3;
+}

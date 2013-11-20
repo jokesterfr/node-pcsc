@@ -32,7 +32,7 @@ namespace PCSC {
     // Which is different from the original windows API
     //
     // Check if Plug 'n play is supported
-    #if SCARD_PNP_DISABLED
+    #ifndef __APPLE__
     SCARD_READERSTATE readerState[1];
     readerState[0].szReader = "\\\\?PnP?\\Notification";
     readerState[0].dwCurrentState = SCARD_STATE_UNAWARE;
@@ -117,10 +117,13 @@ namespace PCSC {
       ptr += strlen(ptr)+1;
     }
     // To allow PnP
-    //readersState[nbReaders].szReader = "\\\\?PnP?\\Notification";
-    //readersState[nbReaders].dwCurrentState = SCARD_STATE_UNAWARE;
+    #ifndef __APPLE__
+    readersState[nbReaders].szReader = "\\\\?PnP?\\Notification";
+    readersState[nbReaders].dwCurrentState = SCARD_STATE_UNAWARE;
+    #endif
 
     #ifdef SCARD_AUTOALLOCATE
+    // This is a Memory Leak, but mszReaders is needed until the end
     //SCardFreeMemory(hContext, mszReaders);
     #endif
     return READERS_UPDATED;
