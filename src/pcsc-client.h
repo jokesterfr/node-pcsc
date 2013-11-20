@@ -21,10 +21,12 @@
 #include <node.h>
 
 #ifdef __APPLE__
-#include <pcsclite.h>
-#include <wintypes.h>
-#endif
+#include <PCSC/pcsclite.h>
+#include <PCSC/wintypes.h>
+#include <PCSC/winscard.h>
+#else
 #include <winscard.h>
+#endif
 
 namespace PCSC {
 

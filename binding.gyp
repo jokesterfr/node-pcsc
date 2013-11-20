@@ -31,7 +31,6 @@
           }
         }],
         ['OS=="mac"', {
-          'include_dirs': ['/System/Library/Frameworks/PCSC.framework/Headers/'],
           'libraries': ['-framework', 'PCSC']
         }]
       ]

@@ -256,7 +256,7 @@ namespace PCSC {
             }
 
             // Pseudo ADPU to Retrieve card Serial Number (UID)
-            BYTE pbRecvBuffer[10*1024]; // Max Card Size currently (2013) was: [256];
+            BYTE pbRecvBuffer[10];//[10*1024]; // Max Card Size currently (2013) was: [256];
             BYTE pbSendBuffer[] = { 0xFF, 0xCA, 0x00, 0x00, 0x00 };
 
             SCARD_IO_REQUEST pioRecvPci;
