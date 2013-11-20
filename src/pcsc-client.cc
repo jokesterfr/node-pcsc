@@ -58,7 +58,7 @@ namespace PCSC {
   int update_readers( SCARDCONTEXT &hContext, SCARD_READERSTATE *&readersState, v8::Persistent<v8::Object> &readers ){
     LONG rv;
     DWORD dwReaders;
-    #ifdef SCARD_AUTOALLOCATE
+    #ifdef DO_NOT_USE_SCARD_AUTOALLOCATE
       dwReaders = SCARD_AUTOALLOCATE;
     #endif
 
@@ -73,7 +73,7 @@ namespace PCSC {
       return ERROR_INVALID_CXT;
     }
 
-    #ifndef SCARD_AUTOALLOCATE
+    #ifndef DO_NOT_USE_SCARD_AUTOALLOCATE
       // Allocate buffer when autoallocate is not present
       rv = SCardListReaders(hContext, NULL, NULL, &dwReaders);
       mszReaders = static_cast<LPSTR>(new char[dwReaders]);
@@ -82,10 +82,10 @@ namespace PCSC {
     rv = SCardListReaders(hContext, NULL, mszReaders, &dwReaders);
     if(rv != SCARD_S_SUCCESS || mszReaders[0] == '\0') {
       readers = v8::Persistent<v8::Array>::New(v8::Array::New(0));
-      #ifdef SCARD_AUTOALLOCATE
+      #ifdef DO_NOT_USE_SCARD_AUTOALLOCATE
       SCardFreeMemory(hContext, mszReaders);
       #else
-      delete mszReaders;
+      delete [] mszReaders;
       #endif
       return NO_READER_FOUND;
     }
@@ -99,7 +99,7 @@ namespace PCSC {
 
     // Allocate the ReaderStates table
     if(readersState) {
-      free(readersState);
+      delete [] readersState;
     }
     readersState = new SCARD_READERSTATE[nbReaders+1]; // +1 For the PnP Record
     
@@ -127,7 +127,7 @@ namespace PCSC {
     readersState[nbReaders].dwCurrentState = SCARD_STATE_UNAWARE;
     #endif
 
-    #ifdef SCARD_AUTOALLOCATE
+    #ifdef DO_NOT_USE_SCARD_AUTOALLOCATE
     // This is a Memory Leak, but mszReaders is needed until the end
     //SCardFreeMemory(hContext, mszReaders);
     #endif
