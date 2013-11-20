@@ -12,7 +12,7 @@
 
 // Under Windows it is not defined
 #ifndef MAX_ATR_SIZE
-#define MAX_ATR_SIZE
+#define MAX_ATR_SIZE 33
 #endif
 
 namespace PCSC {
