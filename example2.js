@@ -3,7 +3,7 @@
 // How to bind node-pcsc from an external program
 //
 
-var pcsc = require('node-pcsc');
+var pcsc = require('bindings');
 pcsc.init();
 
 pcsc.on('evt', function(evt) {

@@ -24,6 +24,6 @@ pcsc.on('message', function(evt) {
 		if (evt.card.Protocol) console.log('-> card Protocol:', evt.card.Protocol);
 		if (evt.card.err) console.log('-> card transmit err:', evt.card.err);
 		if (evt.card.UID) console.log('-> card UID:', evt.card.UID);
-		console.log();
+		console.log(evt);
 	}
 });
