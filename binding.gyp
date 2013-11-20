@@ -32,6 +32,9 @@
         }],
         ['OS=="mac"', {
           'libraries': ['-framework', 'PCSC']
+        }],
+        ['OS=="win"', {
+          'libraries': ['-lWinSCard']
         }]
       ]
     }
