@@ -10,6 +10,11 @@
 #include "pcsc-client.h"
 #include <iostream>
 
+// Under Windows it is not defined
+#ifndef MAX_ATR_SIZE
+#define MAX_ATR_SIZE
+#endif
+
 namespace PCSC {
 
   /**
