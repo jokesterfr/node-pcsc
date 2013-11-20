@@ -18,14 +18,11 @@ Dependencies to run this out are:
 
 If you are running a Debian/Ubuntu Linux distribution you may install it this way:
 
-	sudo apt-get install nodejs npm libpcsclite1 libpcsclite-dev
+    sudo apt-get install nodejs npm libpcsclite1 libpcsclite-dev
 
 Under Mac OS X if you have updated to Maveric after installing Xcode you need to run:
 
-  xcode-select --install
-
-The Mac OS Version is currently not running. Due to the old PCSC Version no PnP is present 
-and it seems that the non-blocking interfaces mess with the addon.
+    xcode-select --install
 
 Under Windows you need to install all updates for the Windows SDK and Visual Studio
 This is really annoying 100 times restart ...

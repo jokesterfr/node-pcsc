@@ -79,7 +79,7 @@ namespace PCSC {
       mszReaders = static_cast<LPSTR>(new char[dwReaders]);
     #endif
     // Call with the real allocated buffer
-    rv = SCardListReaders(hContext, NULL, (LPTSTR)&mszReaders, &dwReaders);
+    rv = SCardListReaders(hContext, NULL, mszReaders, &dwReaders);
     if(rv != SCARD_S_SUCCESS || mszReaders[0] == '\0') {
       readers = v8::Persistent<v8::Array>::New(v8::Array::New(0));
       #ifdef SCARD_AUTOALLOCATE
@@ -101,7 +101,7 @@ namespace PCSC {
     if(readersState) {
       free(readersState);
     }
-    readersState = new SCARD_READERSTATE[nbReaders];
+    readersState = new SCARD_READERSTATE[nbReaders+1]; // +1 For the PnP Record
     
     // Create a new readers Array
     //readers = v8::Persistent<v8::Array>::New(v8::Array::New(nbReaders));
