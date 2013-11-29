@@ -12,12 +12,11 @@
  *****************************************************************************/
 
 // Script requirements
-// ****************************************************************************
+// -------------------
 var util = require('util');
 var events = require('events');
 var fork = require('child_process').fork;
-var path = require('path');
-var node_pcsc = path.join(__dirname, 'lib/node-pcsc.js');
+var node_pcsc = __dirname + '/lib/node-pcsc.js';
 
 var Bindings = function() {
 	// Call super constructor		

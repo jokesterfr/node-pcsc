@@ -39,7 +39,7 @@ Or install it via the `npm` tool:
 
 ## Updating SmartCard/RFID tags card list
 
-The author of PCSC, Ludovic Rousseau, is maintaining a list of known SmartCard/RFID tags on his website. This package integrate a version of it (`./lib/pcsc-list.js`), and provide a tool to update it if needed:
+The author of PCSC, Ludovic Rousseau, is maintaining a list of known SmartCard/RFID tags on his website. This package integrate a version of it (`./lib/smcard-list.js`), and provide a tool to update it if needed:
 
 	npm run update-list
 

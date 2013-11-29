@@ -1,11 +1,18 @@
 #!/usr/bin/env node
-//
-// How to bind node-pcsc from an external program
-//
 
-var pcsc = require('bindings');
+/*
+ * @file example2.js
+ * @date 2013-11-29
+ * @licence MIT
+ * @description
+ * A simple example of how to bind node-pcsc
+ * from an external program
+ */
+'use strict';
+
+var pcsc = require(__dirname + '/../binding');
+
 pcsc.init();
-
 pcsc.on('evt', function(evt) {
 	console.log('Event status:',evt.reader.status);
 });

@@ -1,23 +1,21 @@
 #!/usr/bin/env node
 
-/******************************************************************************
- *                                                                            *
- * @file updateList.js                                                        *
- * @author Clément Désiles <clement.desiles@telecomsante.com>                 *
- * @date 2013/02/17                                                           *
- *                                                                            *
- * Update the list of known SmartCard from Ludovic Rousseau's website         *
- *                                                                            *
- *****************************************************************************/
+/*
+ * @file updateList.js
+ * @author Clément Désiles <clement.desiles@telecomsante.com>
+ * @date 2013/02/17
+ * @description
+ * Update the list of known SmartCard from Ludovic Rousseau's website
+ */
+'use strict';
 
-var fs = require('fs');
-var url = require('url');
-var http = require('http');
-var path = require('path');
-var BufferStream = require('bufferstream');
+var fs = require('fs')
+  , url = require('url')
+  , http = require('http')
+  , BufferStream = require('bufferstream')
 
 // List file configuration
-var outputFile = path.join(__dirname,'..','lib','pcsc-list.js');
+var outputFile = __dirname + '/../lib/smcard-list.js';
 
 /** 
  * A parser written specificaly to translate the 

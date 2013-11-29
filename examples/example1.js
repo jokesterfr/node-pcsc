@@ -1,18 +1,17 @@
 #!/usr/bin/env node
 
-/******************************************************************************
- *                                                                            *
- * @file test.js                                                              *
- * @author Clément Désiles <clement.desiles@telecomsante.com>                 *
- * @date 2013/02/13                                                           *
- * @licence MIT                                                               *
- *                                                                            *
- * Sample to test the nodejs bindings to PCSC                                 *
- *                                                                            *
- *****************************************************************************/
+/*
+ * @file test.js
+ * @author Clément Désiles <clement.desiles@telecomsante.com>
+ * @date 2013-02-13
+ * @licence MIT
+ * @description
+ * Sample to test the nodejs bindings to PCSC
+ */
+'use strict';
 
-var fork = require('child_process').fork;
-var pcsc = fork('./lib/node-pcsc.js');
+var fork = require('child_process').fork
+  , pcsc = fork(__dirname + '/../lib/node-pcsc')
 
 pcsc.on('message', function(evt) {
 	// Show info when state switch to present
