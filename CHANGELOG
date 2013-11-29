@@ -1,10 +1,16 @@
-Version 0.1.1 - 26/02/2013 - Clément Désiles
-============================================
+Version 0.2.0 - 2013-11-29
+==========================
+* Fix compiler warning (pull request #9) @LudovicRousseau
+* Windows and Max Os X support (pull request #13) @hackerhelmut @LudovicRousseau
+* Increase buffer size for UID retrieval @greergan
+
+Version 0.1.1 - 2013-02-26
+==========================
 * Fork the pcsc loop into another child_process to be non blocking for node
 * Updated example to show up running parallel tasks
 
-Version 0.1.0 - 13/02/2013 - Clément Désiles
-============================================
+Version 0.1.0 - 2013-02-13
+==========================
 * Support reader listing
 * Javascript-side Event Emitter
 * Card ATR retrieval

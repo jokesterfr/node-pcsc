@@ -1,10 +1,12 @@
 {
 	"name": "node-pcsc",
-	"version": "0.1.2",
+	"version": "0.2.0",
 	"description": "A PCSC binding for node.js",
-	"author": "Telecom Santé <tech@telecomsante.com>",
+	"author": "Clément Désiles <main@jokester.fr>",
 	"contributors": [
-		{ "name": "Clément Désiles", "email": "clement.desiles@telecomsante.com" }
+		{ "name": "Ludovic Rousseau", "url": "https://github.com/LudovicRousseau" },
+		{ "name": "Rolf Meyer", "url": "https://github.com/hackerhelmut" },
+		{ "name": "Jeff Greer", "url": "https://github.com/greergan" }
 	],
 	"license": "MIT Licence",
 	"preferGlobal": "false",
@@ -17,5 +19,7 @@
 		"bufferstream":">=0.5.x"
 	},
 	"test": "./test.js",
-	"engine": {	"node": ">=0.8.0" }
+	"engine": {
+		"node": ">=0.8.0"
+	}
 }

@@ -361,7 +361,7 @@ namespace PCSC {
   /**
    * Release the PCSC context
    */
-  int release_context(SCARDCONTEXT &hContext) {
-     return SCardReleaseContext(hContext);
+  void release_context(SCARDCONTEXT &hContext) {
+    SCardReleaseContext(hContext);
   }
 } // <- end of namespace
