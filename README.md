@@ -60,7 +60,7 @@ A test suite will be proabably written later on.
 
 A little example using this library is available, you can try it this way:
 
-	./example.js
+	./examples/example1.js
 
 ## Contributing
 
