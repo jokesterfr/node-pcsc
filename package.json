@@ -1,6 +1,6 @@
 {
 	"name": "node-pcsc",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"description": "A PCSC binding for node.js",
 	"author": "Clément Désiles <main@jokester.fr>",
 	"contributors": [
@@ -8,12 +8,21 @@
 		{ "name": "Rolf Meyer", "url": "https://github.com/hackerhelmut" },
 		{ "name": "Jeff Greer", "url": "https://github.com/greergan" }
 	],
-	"license": "MIT Licence",
 	"preferGlobal": "false",
 	"dependencies": { },
 	"scripts": {
 		"update-list": "./tools/updateList.js"
 	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jokesterfr/node-pcsc.git"
+	},
+	"keywords": [
+		"pcsc",
+		"rfid",
+		"smartcard",
+		"reader"
+	],
 	"main": "./binding.js",
 	"devDependencies": { 
 		"bufferstream":">=0.5.x"
@@ -21,5 +30,6 @@
 	"test": "./test.js",
 	"engine": {
 		"node": ">=0.8.0"
-	}
+	},
+	"license": "MIT Licence"
 }
