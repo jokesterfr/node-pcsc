@@ -7,15 +7,18 @@
  *                                                                            *
  *****************************************************************************/
 
+#include <node.h>
+
 #include "pcsc-emitter.h"
 
 using namespace v8;
 
+Persistent<Function> PCSCEmitter::constructor;
+
 PCSCEmitter::PCSCEmitter() {}
 PCSCEmitter::~PCSCEmitter() {
   delete [] _readers_state;
-  _readers.Dispose();
-  _readers.Clear();
+  _readers.Reset();
   PCSC::release_context( _scard_context );
   fprintf(stdout, "Destructor called -> done\n");
 }
@@ -23,19 +26,20 @@ PCSCEmitter::~PCSCEmitter() {
 /** 
  * Export PCSCEmitter to Node module
  */
-void PCSCEmitter::Init( Handle<Object> target ) {
+void PCSCEmitter::Init( Local<Object> exports) {
+	Isolate* isolate = exports->GetIsolate();
+
   // Prepare constructor template
-  Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
+  Local<FunctionTemplate> tpl = FunctionTemplate::New(isolate, New);
+  tpl->SetClassName(String::NewFromUtf8(isolate, "PCSCEmitter"));
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
   // Add methods to the prototype
-  tpl->PrototypeTemplate()->Set(String::NewSymbol("getReaders"),
-    FunctionTemplate::New(getReaders)->GetFunction());
-  tpl->PrototypeTemplate()->Set(String::NewSymbol("scardRead"),
-    FunctionTemplate::New(scardRead)->GetFunction());
+  NODE_SET_PROTOTYPE_METHOD(tpl, "getReaders", getReaders);
+  NODE_SET_PROTOTYPE_METHOD(tpl, "scardRead", scardRead);
 
-  Persistent<Function> cstr = Persistent<Function>::New(tpl->GetFunction());
-    target->Set(String::NewSymbol("PCSC"), cstr);
+  constructor.Reset(isolate, tpl->GetFunction());
+  exports->Set(String::NewFromUtf8(isolate, "PCSC"), tpl->GetFunction());
 }
 
 
@@ -43,45 +47,48 @@ void PCSCEmitter::Init( Handle<Object> target ) {
  * V8-style constructor for PCSCEmitter
  * Wraps the PCSC context into the PCSCEmitter
  */
-Handle<Value> PCSCEmitter::New( const Arguments& args ) {
-  HandleScope scope;
+void PCSCEmitter::New(const v8::FunctionCallbackInfo<v8::Value>& info) {
+	Isolate* isolate = info.GetIsolate();
+	HandleScope scope(isolate);
 
-  // Instanciate a new PCSCEmitter
-  assert(args.IsConstructCall());
-  PCSCEmitter *self = new PCSCEmitter();
+	assert(info.IsConstructCall());
+	PCSCEmitter* self = new PCSCEmitter();
 
-  // Null the readers state pointer
-  self->_readers_state = NULL;
+	// Null the readers state pointer
+	self->_readers_state = NULL;
 
-  // Init the PCSC context
-  switch ( PCSC::init_context( self->_scard_context ) ){
-    case PCSC::ERROR_ESTABLISH_CXT:
-      ThrowException(Exception::TypeError(String::New("Cannot establish context")));
-      return scope.Close(Undefined());
-    case PCSC::ERROR_PNP:
-      ThrowException(Exception::TypeError(String::New("PnP is not supported")));
-      return scope.Close(Undefined());
-  }
+	// Init the PCSC context
+	switch (PCSC::init_context(self->_scard_context)) {
+	case PCSC::ERROR_ESTABLISH_CXT:
+		isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Cannot establish context")));
+		info.GetReturnValue().Set(Undefined(isolate));
+		return;
+	case PCSC::ERROR_PNP:
+		isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "PnP is not supported")));
+		info.GetReturnValue().Set(Undefined(isolate));
+		return;
+	}
 
-  // Update readers
-  int res = PCSC::update_readers( self->_scard_context, 
-                    self->_readers_state,
-                    self->_readers );   
+	// Update readers
+	int res = PCSC::update_readers(self->_scard_context,
+		self->_readers_state,
+		isolate,
+		self->_readers);
 
-  // TODO: se séparer des codes d'erreur : utiliser pcsc_stringify_error
-  // Interprete the updating result
-  switch(res) {
-    case PCSC::ERROR_INVALID_CXT: 
-      ThrowException(
-        Exception::TypeError(String::New("Cannot establish context"))
-      );
-      return scope.Close(Undefined());
-  };
+	// TODO: se séparer des codes d'erreur : utiliser pcsc_stringify_error
+	// Interprete the updating result
+	switch (res) {
+	case PCSC::ERROR_INVALID_CXT:
+		isolate->ThrowException(
+			Exception::TypeError(String::NewFromUtf8(isolate, "Cannot establish context"))
+		);
+		info.GetReturnValue().Set(Undefined(isolate));
+		return;
+	};
 
-
-  // Wrap instance and close scope
-  self->Wrap(args.This());
-  return scope.Close(args.This());
+	// Invoked as constructor: `new PCSC(...)`
+	self->Wrap(info.This());
+	info.GetReturnValue().Set(info.This());
 }
 
 /**
@@ -89,24 +96,26 @@ Handle<Value> PCSCEmitter::New( const Arguments& args ) {
  * @param args {v8::Argument}
  * @return {v8::Undefined}
  */
-Handle<Value> PCSCEmitter::scardRead(const Arguments& args) {
-  HandleScope scope;
+void PCSCEmitter::scardRead(const v8::FunctionCallbackInfo<v8::Value>& info) {
+	Isolate* isolate = info.GetIsolate();
+	HandleScope scope(isolate);
 
   // Callback to reenter in the scardRead loop
-  if(args[0]->ToObject()->IsFunction()){
-    Local<Function> callback = Local<Function>::Cast(args[0]);
+  if(info[0]->ToObject()->IsFunction()){
+    Local<Function> callback = Local<Function>::Cast(info[0]);
     //Read status (blocking operation)
-    PCSCEmitter* self = ObjectWrap::Unwrap<PCSCEmitter>(args.This());
+    PCSCEmitter* self = ObjectWrap::Unwrap<PCSCEmitter>(info.This());
     PCSC::check_card_status( self->_scard_context,
                  self->_readers_state,
-                 self->_readers,
+                 isolate,
+				 self->_readers,
                  callback );
   } else {
-    ThrowException(
-      Exception::TypeError(String::New("`scardRead` require a callback parameter"))
+    isolate->ThrowException(
+      Exception::TypeError(String::NewFromUtf8(isolate, "`scardRead` require a callback parameter"))
     );
   }
-  return scope.Close(Undefined());
+  info.GetReturnValue().Set(Undefined(isolate));
 }
 
 /**
@@ -115,12 +124,13 @@ Handle<Value> PCSCEmitter::scardRead(const Arguments& args) {
  * @param args {v8::Argument}
  * @return {v8::Array} list of available readers
  */
-Handle<Value> PCSCEmitter::getReaders(const Arguments& args) {
-  HandleScope scope;
+void PCSCEmitter::getReaders(const v8::FunctionCallbackInfo<v8::Value>& info) {
+	Isolate* isolate = info.GetIsolate();
+	HandleScope scope(isolate);
 
   // Unwrap PCSC context
-  PCSCEmitter* self = ObjectWrap::Unwrap<PCSCEmitter>(args.This());
+  PCSCEmitter* self = ObjectWrap::Unwrap<PCSCEmitter>(info.This());
 
   // Close scope returning readers
-  return scope.Close(self->_readers);
+  info.GetReturnValue().Set(self->_readers);
 }
