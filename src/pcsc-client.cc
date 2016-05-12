@@ -7,6 +7,8 @@
  *                                                                            *
  *****************************************************************************/
 
+#include <node.h>
+
 #include "pcsc-client.h"
 #include <iostream>
 
@@ -55,7 +57,7 @@ namespace PCSC {
    * Update the readers list and the associated readersState list
    * which loops over new readers states.
    */
-  int update_readers( SCARDCONTEXT &hContext, SCARD_READERSTATE *&readersState, v8::Persistent<v8::Object> &readers ){
+  int update_readers( SCARDCONTEXT &hContext, SCARD_READERSTATE *&readersState, v8::Isolate* isolate, v8::Persistent<v8::Object> &readers ){
     LONG rv;
     DWORD dwReaders;
     #ifdef DO_NOT_USE_SCARD_AUTOALLOCATE
@@ -81,7 +83,7 @@ namespace PCSC {
     // Call with the real allocated buffer
     rv = SCardListReaders(hContext, NULL, mszReaders, &dwReaders);
     if(rv != SCARD_S_SUCCESS || mszReaders[0] == '\0') {
-      readers = v8::Persistent<v8::Array>::New(v8::Array::New(0));
+      readers.Reset(isolate, v8::Array::New(isolate, 0));
       #ifdef DO_NOT_USE_SCARD_AUTOALLOCATE
       SCardFreeMemory(hContext, mszReaders);
       #else
@@ -105,14 +107,16 @@ namespace PCSC {
     
     // Create a new readers Array
     //readers = v8::Persistent<v8::Array>::New(v8::Array::New(nbReaders));
-    readers = v8::Persistent<v8::Object>::New(v8::Object::New());
+    readers.Reset(isolate, v8::Object::New(isolate));
 
     // Read the readers structure
     ptr = mszReaders;
+	v8::Local<v8::Object> localReaders = v8::Local<v8::Object>::New(isolate, readers);
+
     for(i=0; i<nbReaders; i++) {
       // For js binding
-      //readers->Set(v8::Number::New(i), v8::String::New(ptr));
-      readers->Set(v8::String::NewSymbol(ptr), v8::Undefined());
+      //readers->Set(v8::Number::New(i), v8::String::NewFromUtf8(isolate, ptr));
+	  localReaders->Set(v8::String::NewFromUtf8(isolate, ptr), v8::Undefined(isolate));
 
       // Update readers state
       readersState[i].szReader = ptr;
@@ -139,7 +143,7 @@ namespace PCSC {
    * On status change, call the appropriate 
    * registered functions (if there are).
    */
-  int check_card_status( SCARDCONTEXT &hContext, SCARD_READERSTATE *&readersState, v8::Persistent<v8::Object> &readers, v8::Local<v8::Function> &callback ){
+  int check_card_status( SCARDCONTEXT &hContext, SCARD_READERSTATE *&readersState, v8::Isolate* isolate, v8::Persistent<v8::Object> &readers, v8::Local<v8::Function> &callback ){
     unsigned int i, k, nbReaders;
     DWORD evt;
     LONG rv;
@@ -155,8 +159,10 @@ namespace PCSC {
       return ERROR_INVALID_CXT;
     }
 
+	v8::Local<v8::Object> localReaders = v8::Local<v8::Object>::New(isolate, readers);
+
     // Count readers
-    nbReaders = readers->GetPropertyNames()->Length();
+    nbReaders = localReaders->GetPropertyNames()->Length();
 
     // Readers state has to be filled up by update_readers
     if ( !readersState || !nbReaders ) {
@@ -181,33 +187,33 @@ namespace PCSC {
 
         // Reader id: i, reader name: readersState[i].szReader
         if(evt & SCARD_STATE_IGNORE) {
-          status = v8::String::New("SCARD_STATE_IGNORE");
+          status = v8::String::NewFromUtf8(isolate, "SCARD_STATE_IGNORE");
         } else if(evt & SCARD_STATE_UNKNOWN) {
-          status = v8::String::New("SCARD_STATE_UNKNOWN");
+          status = v8::String::NewFromUtf8(isolate, "SCARD_STATE_UNKNOWN");
         } else  if(evt & SCARD_STATE_UNAVAILABLE) {
-          status = v8::String::New("SCARD_STATE_UNAVAILABLE");
+          status = v8::String::NewFromUtf8(isolate, "SCARD_STATE_UNAVAILABLE");
         } else if(evt & SCARD_STATE_EMPTY) {
-          status = v8::String::New("SCARD_STATE_EMPTY");
+          status = v8::String::NewFromUtf8(isolate, "SCARD_STATE_EMPTY");
         } else if(evt & SCARD_STATE_PRESENT) {
-          status = v8::String::New("SCARD_STATE_PRESENT");
+          status = v8::String::NewFromUtf8(isolate, "SCARD_STATE_PRESENT");
         } else if(evt & SCARD_STATE_ATRMATCH) {
-          status = v8::String::New("SCARD_STATE_ATRMATCH");
+          status = v8::String::NewFromUtf8(isolate, "SCARD_STATE_ATRMATCH");
         } else if(evt & SCARD_STATE_EXCLUSIVE) {
-          status = v8::String::New("SCARD_STATE_EXCLUSIVE");
+          status = v8::String::NewFromUtf8(isolate, "SCARD_STATE_EXCLUSIVE");
         } else if(evt & SCARD_STATE_INUSE) {
-          status = v8::String::New("SCARD_STATE_INUSE");
+          status = v8::String::NewFromUtf8(isolate, "SCARD_STATE_INUSE");
         } else if(evt & SCARD_STATE_MUTE) {
-          status = v8::String::New("SCARD_STATE_MUTE");
+          status = v8::String::NewFromUtf8(isolate, "SCARD_STATE_MUTE");
         }
 
         // Prepare readerObject event
         // ---------------------------
-        v8::Local<v8::Object> readerObj = v8::Object::New();
-        readerObj->Set(v8::String::NewSymbol("name"), readers->GetOwnPropertyNames()->Get(i));
-        readerObj->Set(v8::String::NewSymbol("status"), v8::Local<v8::Value>::New(status));
+        v8::Local<v8::Object> readerObj = v8::Object::New(isolate);
+        readerObj->Set(v8::String::NewFromUtf8(isolate, "name"), localReaders->GetOwnPropertyNames()->Get(i));
+        readerObj->Set(v8::String::NewFromUtf8(isolate, "status"), v8::Local<v8::Value>::New(isolate, status));
 
         // Card object, will be eventually filled lateron
-        v8::Local<v8::Object> cardObj = v8::Object::New();
+        v8::Local<v8::Object> cardObj = v8::Object::New(isolate);
 
         // If a card is present prepare card event
         // ----------------------------------------
@@ -223,13 +229,13 @@ namespace PCSC {
             } else {
               atr[0] = '\0';
             }
-            cardObj->Set(v8::String::NewSymbol("ATR"), v8::String::New(atr));
+            cardObj->Set(v8::String::NewFromUtf8(isolate, "ATR"), v8::String::NewFromUtf8(isolate, atr));
           }
           
           // Establishes a connection to a smart card contained by a specific reader.
           SCARDHANDLE hCard;
           DWORD activeProtocol;
-          v8::String::Utf8Value readerName(readers->GetOwnPropertyNames()->Get(i));
+          v8::String::Utf8Value readerName(localReaders->GetOwnPropertyNames()->Get(i));
           rv = SCardConnect(
             hContext,                               // Resource manager handle
             (LPCSTR)*readerName,                    // Reader name
@@ -246,12 +252,12 @@ namespace PCSC {
             LPCSCARD_IO_REQUEST ioRequest;
             switch (activeProtocol) {
               case SCARD_PROTOCOL_T0:
-                cardObj->Set(v8::String::NewSymbol("Protocol"), v8::String::New("T=0"));
+                cardObj->Set(v8::String::NewFromUtf8(isolate, "Protocol"), v8::String::NewFromUtf8(isolate, "T=0"));
                 ioRequest = SCARD_PCI_T0;
                 break;
 
               case SCARD_PROTOCOL_T1:
-                cardObj->Set(v8::String::NewSymbol("Protocol"), v8::String::New("T=1"));
+                cardObj->Set(v8::String::NewFromUtf8(isolate, "Protocol"), v8::String::NewFromUtf8(isolate, "T=1"));
                 ioRequest = SCARD_PCI_T1;
                 break;
 
@@ -285,11 +291,11 @@ namespace PCSC {
                   sprintf(&uid[k*3], "%02X ", pbRecvBuffer[k]);
                 }
                 uid[k*3-1] = '\0';
-                cardObj->Set(v8::String::NewSymbol("UID_length"), v8::Number::New(dwRecvLength));
+                cardObj->Set(v8::String::NewFromUtf8(isolate, "UID_length"), v8::Number::New(isolate, dwRecvLength));
               } else {
                 uid[0] = '\0';
               }         
-              cardObj->Set(v8::String::NewSymbol("UID"), v8::String::New(uid));
+              cardObj->Set(v8::String::NewFromUtf8(isolate, "UID"), v8::String::NewFromUtf8(isolate, uid));
 
               // Disconnect it right now
               SCardDisconnect(
@@ -299,37 +305,37 @@ namespace PCSC {
             } else {
               switch(rv) {
                 case SCARD_E_INSUFFICIENT_BUFFER:
-                  cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_INSUFFICIENT_BUFFER"));
+                  cardObj->Set(v8::String::NewFromUtf8(isolate, "err"), v8::String::NewFromUtf8(isolate, "SCARD_E_INSUFFICIENT_BUFFER"));
                   break;
                 case SCARD_E_INVALID_PARAMETER:
-                  cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_INVALID_PARAMETER"));
+                  cardObj->Set(v8::String::NewFromUtf8(isolate, "err"), v8::String::NewFromUtf8(isolate, "SCARD_E_INVALID_PARAMETER"));
                   break;
                 case SCARD_E_INVALID_HANDLE:
-                  cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_INVALID_HANDLE"));
+                  cardObj->Set(v8::String::NewFromUtf8(isolate, "err"), v8::String::NewFromUtf8(isolate, "SCARD_E_INVALID_HANDLE"));
                   break;
                 case SCARD_E_INVALID_VALUE:
-                  cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_INVALID_VALUE"));
+                  cardObj->Set(v8::String::NewFromUtf8(isolate, "err"), v8::String::NewFromUtf8(isolate, "SCARD_E_INVALID_VALUE"));
                   break;
                 case SCARD_E_NO_SERVICE:
-                  cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_NO_SERVICE"));
+                  cardObj->Set(v8::String::NewFromUtf8(isolate, "err"), v8::String::NewFromUtf8(isolate, "SCARD_E_NO_SERVICE"));
                   break;
                 case SCARD_E_NOT_TRANSACTED:
-                  cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_NOT_TRANSACTED"));
+                  cardObj->Set(v8::String::NewFromUtf8(isolate, "err"), v8::String::NewFromUtf8(isolate, "SCARD_E_NOT_TRANSACTED"));
                   break;
                 case SCARD_E_PROTO_MISMATCH:
-                  cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_PROTO_MISMATCH"));
+                  cardObj->Set(v8::String::NewFromUtf8(isolate, "err"), v8::String::NewFromUtf8(isolate, "SCARD_E_PROTO_MISMATCH"));
                   break;
                 case SCARD_E_READER_UNAVAILABLE:
-                  cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_E_READER_UNAVAILABLE"));
+                  cardObj->Set(v8::String::NewFromUtf8(isolate, "err"), v8::String::NewFromUtf8(isolate, "SCARD_E_READER_UNAVAILABLE"));
                   break;
                 case SCARD_F_COMM_ERROR:
-                  cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_F_COMM_ERROR"));
+                  cardObj->Set(v8::String::NewFromUtf8(isolate, "err"), v8::String::NewFromUtf8(isolate, "SCARD_F_COMM_ERROR"));
                   break;
                 case SCARD_W_RESET_CARD:
-                  cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_W_RESET_CARD"));
+                  cardObj->Set(v8::String::NewFromUtf8(isolate, "err"), v8::String::NewFromUtf8(isolate, "SCARD_W_RESET_CARD"));
                   break;
                 case SCARD_W_REMOVED_CARD:
-                  cardObj->Set(v8::String::NewSymbol("err"), v8::String::New("SCARD_W_REMOVED_CARD"));
+                  cardObj->Set(v8::String::NewFromUtf8(isolate, "err"), v8::String::NewFromUtf8(isolate, "SCARD_W_REMOVED_CARD"));
                   break;
               } 
             }
@@ -339,13 +345,13 @@ namespace PCSC {
         //
         // Emit an event message
         // ----------------------
-        v8::Local<v8::Object> evtMsg = v8::Object::New();
-        evtMsg->Set(v8::String::NewSymbol("reader"), readerObj);
-        evtMsg->Set(v8::String::NewSymbol("card"), cardObj);
+        v8::Local<v8::Object> evtMsg = v8::Object::New(isolate);
+        evtMsg->Set(v8::String::NewFromUtf8(isolate, "reader"), readerObj);
+        evtMsg->Set(v8::String::NewFromUtf8(isolate, "card"), cardObj);
 
         const unsigned argc = 1;
         v8::Local<v8::Value> argv[argc] = { evtMsg };
-        callback->Call(v8::Context::GetCurrent()->Global(), argc, argv);
+        callback->Call(isolate->GetCurrentContext()->Global(), argc, argv);
 
         return STATUS_CHECKED;
       }
@@ -354,7 +360,7 @@ namespace PCSC {
     // Simple callback to request another check later on
     const int argc = 0;
     v8::Local<v8::Value> *argv = NULL;
-    callback->Call(v8::Context::GetCurrent()->Global(), argc, argv);      
+    callback->Call(isolate->GetCurrentContext()->Global(), argc, argv);      
     return STATUS_CHECKED;
   }
 

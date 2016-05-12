@@ -18,8 +18,8 @@
 
 using namespace v8;
 
-void init(Handle<Object> target) {
-	PCSCEmitter::Init(target);
+void init(Local<Object> exports) {
+	PCSCEmitter::Init(exports);
 
 	// Gracefully free PCSC memory
 	// AtExit(&PCSC::close);
